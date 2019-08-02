@@ -87,9 +87,14 @@ function exportPNG() {
 
 //---------------------------------------------
 // 必要なフォルダを作成する。useropt()の終わりで実行
-function mkdirZXY(path) {
-    // var path = export_dir;
-    path = path.toString();
+function mkdirZXY(export_z, base_tileZ) {
+    export_dir = Folder.selectDialog('STEP3.画像の出力先フォルダを選択してください');
+    if(export_dir != 0) {
+        var path = export_dir;
+        path = path.toString();
+    } else{
+        return
+    }
     // zフォルダ生成
     var folderZ = new Folder(path + "/" + export_z);
     if (!folderZ.exists){
@@ -97,7 +102,7 @@ function mkdirZXY(path) {
     };
     //---------------------------------------------
     // まずZレベルの倍率比を求める
-    level_magnification = 2^( export_z - base_tileZ );
+    level_magnification = Math.pow(2,( export_z - base_tileZ ));
     // 出力するXフォルダ数を算出
     // 出力元/タイルサイズは今のアートボードをそのまま分割した場合
     // そこに倍率比をかけあわせる
@@ -107,20 +112,32 @@ function mkdirZXY(path) {
     // z14からz16に拡大出力された場合、縦横辺と必要なXフォルダ数は2^2倍される
     // つまり16*2^(16-14)=16*4=64個のXフォルダが必要
     // math.floorは切り捨て処理
+    // console.log(export_dirXcount);
+    // console.log(export_dirYcount);
+    // alert(level_magnification);/* 成功 */
     export_dirXcount = (Math.floor( base_rectW / tilesize )) * level_magnification;
     // 同様に、出力するY.png数を算出
     // mkdirZXYでは使わないが、準備しておく
     export_dirYcount = (Math.floor( base_rectH / tilesize )) * level_magnification;
+    alert(base_tileX)
     //---------------------------------------------
     // xフォルダ作成
     // 初期値はbase_tileX*倍率比、dirXcountを超えたら終了
-    for (var i = base_tileX * level_magnification; i < export_dirXcount+ 1; i++) {
-        var fullPath = path + "/" + export_z + "/" + i;
+    for (var i = 0; i < export_dirXcount+ 1; i++) {
+        var fullPath = path + "/" + export_z + "/" + (base_tileX + i );
         // path/zの下に1つずつxフォルダを作成
         var folder = new Folder(fullPath);
         if (!folder.exists) folder.create();
     }
-    return;
+    alert("ZXY作成終わり")
+    return level_magnification;
+}
+
+//---------------------------------------------
+// 終了時動作
+function end(){
+    var win = new Window('dialog', "Options");
+    win.add('statictext', undefined, "success!");
 }
 
 //---------------------------------------------
@@ -136,9 +153,9 @@ function useropt() {
     var input_base_tileY = win.add('edittext', undefined, "6451");
     // z14,x14549,y6451は東京都庁の庁舎
     win.add('statictext', undefined, "STEP2.出力先タイルのズームレベルを指定してください");
-    var input_export_z = win.add('edittext', undefined, "16");
+    var input_export_Z = win.add('edittext', undefined, "16");
     //---------------------------------------------
-    win.confirmBtn = win.add('button', undefined, "Generate", {
+    win.confirmBtn = win.add('button', undefined, "OK", {
         name: 'confirm'
     }).onClick = function() {
         // 10進数で書かれたzoomInput.textを数値に変換し、整数に繰り上げる。
@@ -146,14 +163,13 @@ function useropt() {
         /* ||2ってあったけど、理解できず不要に見えたので削除 */
         base_tileX = Math.ceil(parseInt(input_base_tileX.text, 10));
         base_tileY = Math.ceil(parseInt(input_base_tileY.text, 10));
-        export_z = Math.ceil(parseInt(input_export_z.text, 10));
+        export_z = Math.ceil(parseInt(input_export_Z.text, 10));
         win.close();
-        export_dir = Folder.selectDialog('STEP3.画像の出力先フォルダを選択してください');
-        if (export_dir){
-            // パスが指定されていれば、その下にZとXフォルダを生成
-            mkdirZXY(export_dir);
-            exportPNG();
-        }
+        // alert(input_base_tileZ.text);
+        // console.log(export_z, base_tileZ)
+        mkdirZXY(export_z, base_tileZ);
+        exportPNG();
+        end();
     }
     win.add('button', undefined, "Cancel", {
         name: 'cancel'
