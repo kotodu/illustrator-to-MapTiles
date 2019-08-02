@@ -25,8 +25,7 @@ var index
 var options = new ExportOptionsPNG24();
 // エクスポート領域をアートボードの大きさに
 options.artBoardClipping = true;
-// var new_index = artboards.length + 1;
-// alert(new_index);
+var tmp = artboards.length;
 //---------------------------------------------
 // x,y,w,hからイラレ向けのrectに変換する関数
 function getRect(x, y, width, height) {
@@ -39,7 +38,7 @@ function getRect(x, y, width, height) {
     // 仕様上-yで正しいみたい
     rect[2] = width + x;
     rect[3] = y - height;
-    alert(rect);
+    // alert(rect);
     // 成功
     // 2654,-696,2782,-824
     return rect;
@@ -94,6 +93,9 @@ function exportPNG() {
     var x = activeboards.artboardRect[0];
     // 二重のforを行う。縦方向に出力していき、xフォルダ満杯になったら1つ横へ
     // alert(export_dirYcount);
+    // アートボードを新規作成
+    newArtboard(getRect(0,0,base_cell,base_cell),"tmp");
+    artboards.setActiveArtboardIndex(tmp);
     for (var ix = 0; ix < export_dirXcount + 1; ix++){
         // xフォルダごとに出力していく
         if (ix > 0) {
@@ -109,22 +111,24 @@ function exportPNG() {
                 y += base_cell;
             }
             // x,yに新たに一時アートボードを生成
-            newArtboard(getRect(x, -y, base_cell, base_cell), 'tmp-artboard');
-            artboards.setActiveArtboardIndex(7);
+            // newArtboard(getRect(x, -y, base_cell, base_cell), 'tmp-artboard');
+            // artboards.setActiveArtboardIndex(artboards.length);
             // ファイル名は出力先フォルダ/z/x/y.png
             // alert(export_dir);
+            artboards[tmp].artboardRect = getRect(x,-y, base_cell, base_cell);
             export_x = base_tileX * level_magnification;
             export_y = base_tileY * level_magnification;
             var newFileName = export_dir + "/" + export_z + '/' + (export_x + ix) + '/' + (export_y + iy) + '.png';
-            alert(newFileName);
+            // alert(newFileName);
             var newFile = new File(newFileName);
             // これらの設定に基づいて画像出力
             doc.exportFile(newFile, ExportType.PNG24, options);
             // で一旦アートボードを消す
-            artboards.remove(7);
-            break
+            // artboards.remove(artboards.length);
         }
     }
+    artboards.remove(tmp);
+    return
 }
 
 //---------------------------------------------
@@ -146,7 +150,7 @@ function mkdirZXY() {
     // xフォルダ作成
     // 初期値はbase_tileX*倍率比、dirXcountを超えたら終了
     for (var i = 0; i < export_dirXcount+ 1; i++) {
-        var fullPath = path + "/" + export_z + "/" + (base_tileX + i );
+        var fullPath = path + "/" + export_z + "/" + (base_tileX * level_magnification + i );
         // path/zの下に1つずつxフォルダを作成
         var folder = new Folder(fullPath);
         if (!folder.exists) folder.create();
@@ -160,7 +164,6 @@ function end(){
     var win = new Window('dialog', "Options");
     win.add('statictext', undefined, "success!");
 }
-
 //---------------------------------------------
 // 情報入力画面、go()の次に実行される
 function useropt() {
