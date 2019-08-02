@@ -23,8 +23,9 @@ var export_dirYcount
 var level_magnification
 var index
 var options = new ExportOptionsPNG24();
-// エクスポート領域をアートボードの大きさに
+// エクスポート領域をアートボードの大きさに->true
 options.artBoardClipping = true;
+// 実行し始める時点でのアートボード数を記録
 var tmp = artboards.length;
 //---------------------------------------------
 // x,y,w,hからイラレ向けのrectに変換する関数
@@ -38,9 +39,6 @@ function getRect(x, y, width, height) {
     // 仕様上-yで正しいみたい
     rect[2] = width + x;
     rect[3] = y - height;
-    // alert(rect);
-    // 成功
-    // 2654,-696,2782,-824
     return rect;
 }
 
@@ -65,15 +63,9 @@ function exportPNG() {
     // z14からz16に拡大出力された場合、縦横辺と必要なXフォルダ数は2^2倍される
     // つまり16*2^(16-14)=16*4=64個のXフォルダが必要
     // math.floorは切り捨て処理
-    // console.log(export_dirXcount);
-    // console.log(export_dirYcount);
-    // alert(level_magnification);/* 成功 */
     export_dirXcount = (Math.floor( base_rectW / tilesize )) * level_magnification;
     // 同様に、出力するY.png数を算出
-    // mkdirZXYでは使わないが、準備しておく
     export_dirYcount = (Math.floor( base_rectH / tilesize )) * level_magnification;
-    // alert(base_rectH);
-    // alert(base_tileX)/* 成功 */
     //---------------------------------------------
     // フォルダを作成
     mkdirZXY();
@@ -88,13 +80,14 @@ function exportPNG() {
     // horizontalScale,verticalScaleは横,縦の倍率指定(%指定)
     options.horizontalScale = level_magnification * 100;
     options.verticalScale = level_magnification * 100;
-    // var cols = Math.sqrt(numberOfTiles);
-    // var size = width / cols;
     var x = activeboards.artboardRect[0];
-    // 二重のforを行う。縦方向に出力していき、xフォルダ満杯になったら1つ横へ
-    // alert(export_dirYcount);
-    // アートボードを新規作成
+    // 二重の繰り返し処理を行う
+    // 縦方向に出力していき、xフォルダ満杯になったら次のxフォルダへ
+    // 一時用アートボードを新規作成
     newArtboard(getRect(0,0,base_cell,base_cell),"tmp");
+    // ArtboardIndexはゼロベース
+    // tmp、つまり初期時点でのartboards.lengthは非ゼロベース
+    // tmp+1ではなくtmpのままでOK
     artboards.setActiveArtboardIndex(tmp);
     for (var ix = 0; ix < export_dirXcount + 1; ix++){
         // xフォルダごとに出力していく
@@ -104,17 +97,15 @@ function exportPNG() {
         var y = - activeboards.artboardRect[1];
         // 左上だし、0じゃなくて1だと思う
         // activeboards.artboardRect[1]はなぜかマイナスなので注意
-        for (var iy = 0; iy < export_dirYcount + 1; iy++) {
+        for (var iy = 0; iy < export_dirYcount; iy++) {
+            // for (var iy = 0; iy < export_dirYcount + 1; iy++) {
             // ycountを超えたら終了、次へ進む
             // 2周目からはyにbase_cellを足していく
             if (iy > 0) {
                 y += base_cell;
             }
-            // x,yに新たに一時アートボードを生成
-            // newArtboard(getRect(x, -y, base_cell, base_cell), 'tmp-artboard');
-            // artboards.setActiveArtboardIndex(artboards.length);
             // ファイル名は出力先フォルダ/z/x/y.png
-            // alert(export_dir);
+            // 一時アートボードを移動させる
             artboards[tmp].artboardRect = getRect(x,-y, base_cell, base_cell);
             export_x = base_tileX * level_magnification;
             export_y = base_tileY * level_magnification;
@@ -123,8 +114,6 @@ function exportPNG() {
             var newFile = new File(newFileName);
             // これらの設定に基づいて画像出力
             doc.exportFile(newFile, ExportType.PNG24, options);
-            // で一旦アートボードを消す
-            // artboards.remove(artboards.length);
         }
     }
     artboards.remove(tmp);
@@ -149,7 +138,7 @@ function mkdirZXY() {
     //---------------------------------------------
     // xフォルダ作成
     // 初期値はbase_tileX*倍率比、dirXcountを超えたら終了
-    for (var i = 0; i < export_dirXcount+ 1; i++) {
+    for (var i = 0; i < export_dirXcount; i++) {
         var fullPath = path + "/" + export_z + "/" + (base_tileX * level_magnification + i );
         // path/zの下に1つずつxフォルダを作成
         var folder = new Folder(fullPath);
@@ -175,7 +164,7 @@ function useropt() {
     var input_base_tileX = win.add('edittext', undefined, "14549");
     win.add('statictext', undefined, "(3)アートボード左上のタイル座標Yを指定してください");
     var input_base_tileY = win.add('edittext', undefined, "6451");
-    // z14,x14549,y6451は東京都庁の庁舎
+    // ちなみに、z14,x14549,y6451は東京都庁の庁舎
     win.add('statictext', undefined, "STEP2.出力先タイルのズームレベルを指定してください");
     var input_export_Z = win.add('edittext', undefined, "16");
     //---------------------------------------------
@@ -184,7 +173,6 @@ function useropt() {
     }).onClick = function() {
         // 10進数で書かれたzoomInput.textを数値に変換し、整数に繰り上げる。
         base_tileZ = Math.ceil(parseInt(input_base_tileZ.text, 10));
-        /* ||2ってあったけど、理解できず不要に見えたので削除 */
         base_tileX = Math.ceil(parseInt(input_base_tileX.text, 10));
         base_tileY = Math.ceil(parseInt(input_base_tileY.text, 10));
         export_z = Math.ceil(parseInt(input_export_Z.text, 10));
@@ -206,21 +194,11 @@ function go() {
     // アクティブなアートボードを呼び出す
     index = doc.artboards.getActiveArtboardIndex()
     activeboards = doc.artboards[index];
-    // 0,1,2,3は左上のx,左上のy,右下のx,右下のyかな
-    // Wは左上のy
+    // 0,1,2,3は左上のx,左上のy,右下のx,右下のy
     base_rectW = activeboards.artboardRect[2] - activeboards.artboardRect[0];
     base_rectH = - (activeboards.artboardRect[3] - activeboards.artboardRect[1]);
-    // なぜかy軸方向はマイナスになる、なぜ？
-    // とりあえあずこれで出す
-    // alert(activeboards.artboardRect)
+    // y軸方向はマイナスになる仕様？
     // 準備ができたら情報入力画面へ
-    // 成功 
-    // alert(base_rectW);/* 3072 */
-    // alert(base_rectH);/* -2048 */
-    // alert(activeboards.artboardRect[0]);/* 2654 */
-    // alert(activeboards.artboardRect[1]);/* -696 */
-    // alert(activeboards.artboardRect[2]);/* 5726 */
-    // alert(activeboards.artboardRect[3]);/* -2744 */
     useropt();
 }
 
