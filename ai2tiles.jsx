@@ -13,16 +13,20 @@ var base_rectW
 var base_rectH
 var export_dir
 var export_z
+var export_x
+var export_y
 var base_cell
 var base_cellX
 var base_cellY
 var export_dirXcount
 var export_dirYcount
 var level_magnification
+var index
 var options = new ExportOptionsPNG24();
 // エクスポート領域をアートボードの大きさに
 options.artBoardClipping = true;
-
+// var new_index = artboards.length + 1;
+// alert(new_index);
 //---------------------------------------------
 // x,y,w,hからイラレ向けのrectに変換する関数
 function getRect(x, y, width, height) {
@@ -30,76 +34,26 @@ function getRect(x, y, width, height) {
     // x,y,w,hを入力し、イラレ向けの値に変換して出力する
     var rect = [];
     rect[0] = x;
-    rect[1] = y;/* -yじゃなくてyだと思うので修正 */
+    rect[1] = y;
+    // -yじゃなくてyだと思うので修正
+    // 仕様上-yで正しいみたい
     rect[2] = width + x;
-    rect[3] = height + y;/* チョット修正 */
+    rect[3] = y - height;
+    alert(rect);
+    // 成功
+    // 2654,-696,2782,-824
     return rect;
 }
 
 //---------------------------------------------
 // 一時的な出力用アートボードを内部的に作成
 function newArtboard(rect, name) {
-    var newArtBoard = doc.artboards.add(rect);
+    var newArtBoard = artboards.add(rect);
     newArtBoard.name = name;
 }
 //---------------------------------------------
-// mkdirZXYを終えた後にuseopt内で実行、臥像出力
+// mkdirZXYを終えた後にuseopt内で実行、画像出力
 function exportPNG() {
-    // Math.pow(2,3)なら2*2*2
-    // var numberOfTiles = Math.pow(2, scale) * Math.pow(2, scale);
-    // 出力元がz14、出力先がz16なら、4倍の比率がある
-    // そこで、z14を256/4=64ずつ区切り、タイル出力時に4倍にする
-    base_cell = 256 / level_magnification
-    // ExportOptionsPNG24では、倍率を指定して出力できる
-    // horizontalScale,verticalScaleは横,縦の倍率指定(%指定)
-    options.horizontalScale = level_magnification * 100;
-    options.verticalScale = level_magnification * 100;
-    // var cols = Math.sqrt(numberOfTiles);
-    // var size = width / cols;
-    var x = parentArtboard.artboardRect[0];
-
-    // 二重のforを行う。縦方向に出力していき、xフォルダ満杯になったら1つ横へ
-    for (var ix = 0; ix < export_dirXcount + 1; ix++){
-        // xフォルダごとに出力していく
-        if (ix > 0) {
-            x += base_cell;
-        }
-        for (var iy = 0; iy < export_dirYcount + 1; iy++) {
-            // ycountを超えたら終了、次へ進む
-            var y = parentArtboard.artboardRect[1];/* 左上だし、0じゃなくて1だと思う */
-            // 2周目からはyにbase_cellを足していく
-            if (iy > 0) {
-                y += base_cell;
-            }
-            // x,yに新たに一時アートボードを生成
-            newArtboard(getRect(x, y, size, size), 'tmp-artboard');
-            doc.artboards.setActiveArtboardIndex(1);
-            // ファイル名は出力先フォルダ/z/x/y.png
-            var newFileName = export_dir + "/" + export_z + '/' + count_x  + '/' + count_y + '.png';
-            var newFile = new File(newFileName);
-            // これらの設定に基づいて画像出力
-            doc.exportFile(newFile, ExportType.PNG24, options);
-            // で一旦アートボードを消す
-            doc.artboards.remove(1);
-        }
-    }
-}
-
-//---------------------------------------------
-// 必要なフォルダを作成する。useropt()の終わりで実行
-function mkdirZXY(export_z, base_tileZ) {
-    export_dir = Folder.selectDialog('STEP3.画像の出力先フォルダを選択してください');
-    if(export_dir != 0) {
-        var path = export_dir;
-        path = path.toString();
-    } else{
-        return
-    }
-    // zフォルダ生成
-    var folderZ = new Folder(path + "/" + export_z);
-    if (!folderZ.exists){
-        folderZ.create();
-    };
     //---------------------------------------------
     // まずZレベルの倍率比を求める
     level_magnification = Math.pow(2,( export_z - base_tileZ ));
@@ -119,7 +73,75 @@ function mkdirZXY(export_z, base_tileZ) {
     // 同様に、出力するY.png数を算出
     // mkdirZXYでは使わないが、準備しておく
     export_dirYcount = (Math.floor( base_rectH / tilesize )) * level_magnification;
-    alert(base_tileX)
+    // alert(base_rectH);
+    // alert(base_tileX)/* 成功 */
+    //---------------------------------------------
+    // フォルダを作成
+    mkdirZXY();
+    //---------------------------------------------
+    // Math.pow(2,3)なら2*2*2
+    // var numberOfTiles = Math.pow(2, scale) * Math.pow(2, scale);
+    // 出力元がz14、出力先がz16なら、4倍の比率がある
+    // そこで、z14を256/4=64ずつ区切り、タイル出力時に4倍にする
+    // alert(level_magnification);/* 成功 */
+    base_cell = 256 / level_magnification;
+    // ExportOptionsPNG24では、倍率を指定して出力できる
+    // horizontalScale,verticalScaleは横,縦の倍率指定(%指定)
+    options.horizontalScale = level_magnification * 100;
+    options.verticalScale = level_magnification * 100;
+    // var cols = Math.sqrt(numberOfTiles);
+    // var size = width / cols;
+    var x = activeboards.artboardRect[0];
+    // 二重のforを行う。縦方向に出力していき、xフォルダ満杯になったら1つ横へ
+    // alert(export_dirYcount);
+    for (var ix = 0; ix < export_dirXcount + 1; ix++){
+        // xフォルダごとに出力していく
+        if (ix > 0) {
+            x += base_cell;
+        }
+        var y = - activeboards.artboardRect[1];
+        // 左上だし、0じゃなくて1だと思う
+        // activeboards.artboardRect[1]はなぜかマイナスなので注意
+        for (var iy = 0; iy < export_dirYcount + 1; iy++) {
+            // ycountを超えたら終了、次へ進む
+            // 2周目からはyにbase_cellを足していく
+            if (iy > 0) {
+                y += base_cell;
+            }
+            // x,yに新たに一時アートボードを生成
+            newArtboard(getRect(x, -y, base_cell, base_cell), 'tmp-artboard');
+            artboards.setActiveArtboardIndex(7);
+            // ファイル名は出力先フォルダ/z/x/y.png
+            // alert(export_dir);
+            export_x = base_tileX * level_magnification;
+            export_y = base_tileY * level_magnification;
+            var newFileName = export_dir + "/" + export_z + '/' + (export_x + ix) + '/' + (export_y + iy) + '.png';
+            alert(newFileName);
+            var newFile = new File(newFileName);
+            // これらの設定に基づいて画像出力
+            doc.exportFile(newFile, ExportType.PNG24, options);
+            // で一旦アートボードを消す
+            artboards.remove(7);
+            break
+        }
+    }
+}
+
+//---------------------------------------------
+// 必要なフォルダを作成する。useropt()の終わりで実行
+function mkdirZXY() {
+    export_dir = Folder.selectDialog('STEP3.画像の出力先フォルダを選択してください');
+    if(export_dir != 0) {
+        var path = export_dir;
+        path = path.toString();
+    } else{
+        return
+    }
+    // zフォルダ生成
+    var folderZ = new Folder(path + "/" + export_z);
+    if (!folderZ.exists){
+        folderZ.create();
+    };
     //---------------------------------------------
     // xフォルダ作成
     // 初期値はbase_tileX*倍率比、dirXcountを超えたら終了
@@ -129,8 +151,7 @@ function mkdirZXY(export_z, base_tileZ) {
         var folder = new Folder(fullPath);
         if (!folder.exists) folder.create();
     }
-    alert("ZXY作成終わり")
-    return level_magnification;
+    return export_dir;
 }
 
 //---------------------------------------------
@@ -165,9 +186,6 @@ function useropt() {
         base_tileY = Math.ceil(parseInt(input_base_tileY.text, 10));
         export_z = Math.ceil(parseInt(input_export_Z.text, 10));
         win.close();
-        // alert(input_base_tileZ.text);
-        // console.log(export_z, base_tileZ)
-        mkdirZXY(export_z, base_tileZ);
         exportPNG();
         end();
     }
@@ -178,20 +196,28 @@ function useropt() {
     }
     win.show()
 }
-//---------------------------------------------
-
-
 
 //---------------------------------------------
 // スクリプト起動時に問題なければ、最初に実行される関数
 function go() {
-    // これって選択されているアートボード？なのだろうか。
-    parentArtboard = doc.artboards[0];
-    // おそらく0,1,2,3は左上のx,左上のy,右下のx,右下のyかな
+    // アクティブなアートボードを呼び出す
+    index = doc.artboards.getActiveArtboardIndex()
+    activeboards = doc.artboards[index];
+    // 0,1,2,3は左上のx,左上のy,右下のx,右下のyかな
     // Wは左上のy
-    base_rectW = parentArtboard.artboardRect[2] - parentArtboard.artboardRect[0];/* [1]-[0]だったけれど、2-0のミスだと思うので修正 */
-    base_rectH = parentArtboard.artboardRect[3] - parentArtboard.artboardRect[1];
+    base_rectW = activeboards.artboardRect[2] - activeboards.artboardRect[0];
+    base_rectH = - (activeboards.artboardRect[3] - activeboards.artboardRect[1]);
+    // なぜかy軸方向はマイナスになる、なぜ？
+    // とりあえあずこれで出す
+    // alert(activeboards.artboardRect)
     // 準備ができたら情報入力画面へ
+    // 成功 
+    // alert(base_rectW);/* 3072 */
+    // alert(base_rectH);/* -2048 */
+    // alert(activeboards.artboardRect[0]);/* 2654 */
+    // alert(activeboards.artboardRect[1]);/* -696 */
+    // alert(activeboards.artboardRect[2]);/* 5726 */
+    // alert(activeboards.artboardRect[3]);/* -2744 */
     useropt();
 }
 
