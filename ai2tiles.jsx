@@ -98,7 +98,6 @@ function exportPNG() {
         // 左上だし、0じゃなくて1だと思う
         // activeboards.artboardRect[1]はなぜかマイナスなので注意
         for (var iy = 0; iy < export_dirYcount; iy++) {
-            // for (var iy = 0; iy < export_dirYcount + 1; iy++) {
             // ycountを超えたら終了、次へ進む
             // 2周目からはyにbase_cellを足していく
             if (iy > 0) {
@@ -110,7 +109,6 @@ function exportPNG() {
             export_x = base_tileX * level_magnification;
             export_y = base_tileY * level_magnification;
             var newFileName = export_dir + "/" + export_z + '/' + (export_x + ix) + '/' + (export_y + iy) + '.png';
-            // alert(newFileName);
             var newFile = new File(newFileName);
             // これらの設定に基づいて画像出力
             doc.exportFile(newFile, ExportType.PNG24, options);
@@ -158,14 +156,16 @@ function end(){
 function useropt() {
     var win = new Window('dialog', "Options");
     win.add('statictext', undefined, "STEP1.出力元アートボード自体について");
-    win.add('statictext', undefined, "(1)アートボードの設計ズームレベルを指定してください");
-    var input_base_tileZ = win.add('edittext', undefined, "14");
-    win.add('statictext', undefined, "(2)アートボード左上のタイル座標Xを指定してください");
-    var input_base_tileX = win.add('edittext', undefined, "14549");
-    win.add('statictext', undefined, "(3)アートボード左上のタイル座標Yを指定してください");
-    var input_base_tileY = win.add('edittext', undefined, "6451");
-    // ちなみに、z14,x14549,y6451は東京都庁の庁舎
-    win.add('statictext', undefined, "STEP2.出力先タイルのズームレベルを指定してください");
+    win.add('statictext', undefined, "(1)制作アートボードの設計ズームレベルzを指定してください");
+    var input_base_tileZ = win.add('edittext', undefined, "12");
+    win.add('statictext', undefined, "(2)制作アートボードの設計左上のタイル座標xを指定してください");
+    var input_base_tileX = win.add('edittext', undefined, "3637");
+    win.add('statictext', undefined, "(3)制作アートボードの設計左上のタイル座標yを指定してください");
+    var input_base_tileY = win.add('edittext', undefined, "1612");
+    // ちなみに、z12,x3637,y1612は東京都庁の庁舎
+    win.add('statictext', undefined, "----------");
+    win.add('statictext', undefined, "STEP2.出力したいタイルデータについて");
+    win.add('statictext', undefined, "出力先タイルの希望ズームレベルz'を指定してください");
     var input_export_Z = win.add('edittext', undefined, "16");
     //---------------------------------------------
     win.confirmBtn = win.add('button', undefined, "OK", {
