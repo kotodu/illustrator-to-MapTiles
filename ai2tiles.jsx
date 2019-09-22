@@ -99,8 +99,12 @@ function exportPNG() {
     // ArtboardIndexはゼロベース
     // tmp、つまり初期時点でのartboards.lengthは非ゼロベース
     // tmp+1ではなくtmpのままでOK
+    // 一時アートボードはこの時点で、まだ座標0,0にいる
     artboards.setActiveArtboardIndex(tmp);
-    for (var ix = 0; ix < export_dirXcount + 1; ix++){
+    //---------------------------------------------
+    // ここからループ処理
+    for (var ix = 0; ix < export_dirXcount; ix++){
+        // なぜdirXcount+1だったんだ？修正済み
         // xフォルダごとに出力していく
         if (ix > 0) {
             x += base_cell;
