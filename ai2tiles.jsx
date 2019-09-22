@@ -1,10 +1,17 @@
 
 //---------------------------------------------
-// 主要変数定義
+// 主要変数定義(本当は必要なもの以外は各関数内が良さげだけども)
 var doc = app.activeDocument;
 var sels = doc.selection;
 var artboards = doc.artboards;
+// tilesizeは出力元タイルサイズの値
+// つまり出力元データのタイルが512pxなどなら512に設定
 var tilesize = 256;
+// imgsizeが画像サイズの値
+// 一旦256でアートボードを用意した後、
+// 256とimgsizeの比率で出力画像の倍率を調整
+var imgsize = 512;
+var img_magnification;
 var base_tileZ
 var base_tileX
 var base_tileY
@@ -52,8 +59,12 @@ function newArtboard(rect, name) {
 // mkdirZXYを終えた後にuseopt内で実行、画像出力
 function exportPNG() {
     //---------------------------------------------
-    // まずZレベルの倍率比を求める
+    // 各変数の調整
+    // まずZレベルの倍率比を求める(Z'/Z)
     level_magnification = Math.pow(2,( export_z - base_tileZ ));
+    // 次に画像サイズ倍率を求める(pngsize/256)
+    // タイルサイズと画像サイズを別にすることで、高画質需要に応答
+    img_magnification = imgsize / 256;
     // 出力するXフォルダ数を算出
     // 出力元/タイルサイズは今のアートボードをそのまま分割した場合
     // そこに倍率比をかけあわせる
@@ -74,12 +85,12 @@ function exportPNG() {
     // var numberOfTiles = Math.pow(2, scale) * Math.pow(2, scale);
     // 出力元がz14、出力先がz16なら、4倍の比率がある
     // そこで、z14を256/4=64ずつ区切り、タイル出力時に4倍にする
-    // alert(level_magnification);/* 成功 */
-    base_cell = 256 / level_magnification;
+    // なお、tilesize≠pngsize
+    base_cell = tilesize / level_magnification;
     // ExportOptionsPNG24では、倍率を指定して出力できる
     // horizontalScale,verticalScaleは横,縦の倍率指定(%指定)
-    options.horizontalScale = level_magnification * 100;
-    options.verticalScale = level_magnification * 100;
+    options.horizontalScale = level_magnification * img_magnification * 100;
+    options.verticalScale = level_magnification * img_magnification * 100;
     var x = activeboards.artboardRect[0];
     // 二重の繰り返し処理を行う
     // 縦方向に出力していき、xフォルダ満杯になったら次のxフォルダへ
@@ -148,13 +159,20 @@ function mkdirZXY() {
 //---------------------------------------------
 // 終了時動作
 function end(){
-    var win = new Window('dialog', "Options");
-    win.add('statictext', undefined, "success!");
+    var win = new Window('dialog', "press OK");
+    win.add('statictext', undefined, "実行が完了しました");
+    // OKを押すと終了
+    win.confirmBtn = win.add('button', undefined, "OK", {
+        name: 'confirm'
+    }).onClick = function() {
+        win.close();
+    }
+    win.show();
 }
 //---------------------------------------------
 // 情報入力画面、go()の次に実行される
 function useropt() {
-    var win = new Window('dialog', "Options");
+    var win = new Window('dialog', "enter options");
     win.add('statictext', undefined, "STEP1.出力元アートボード自体について");
     win.add('statictext', undefined, "(1)制作アートボードの設計ズームレベルzを指定してください");
     var input_base_tileZ = win.add('edittext', undefined, "12");
