@@ -242,7 +242,8 @@ function go() {
 // ここからユーザー操作
 // ドキュメントが開かれていて、かつ保存されていれば実行
 if (app.documents.length > 0) {
-    doc = app.activeDocument;
+    // doc = app.activeDocument;
+    // あれ、ん？何でここにもあったんだ
     if (!doc.saved) {
         Window.alert("ドキュメントが保存されていません");
     } else {
