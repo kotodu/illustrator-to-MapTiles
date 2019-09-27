@@ -1,16 +1,31 @@
 
 //---------------------------------------------
-// 主要変数定義(本当は必要なもの以外は各関数内が良さげだけども)
-var doc = app.activeDocument;
-var sels = doc.selection;
-var artboards = doc.artboards;
+// ユーザーによるカスタマイズ可能変数
+// (1)imgsize : 画像サイズの値(px)
+    // ここで決めたサイズの正方形として地図タイルは出力される
+    // 内部的には、一旦256でアートボードを用意した後、256とimgsizeの比率で出力画像の倍率を調整する。
+let imgsize = 512;
+
+// (2)出力元データの各種既定値
+    // つまりZ,X,Y、アートボードのデータ
+    // XとYで迷う人向けに。Xはフォルダ名、Yは画像名
+    // 因みにこの値は都庁舎
+let defZ = 14;
+let defX = 14549;
+let defY = 6451;
+
+// (3)出力先既定Zレベル既定値
+    // つまりZ'、出力したい地図タイルのズームレベル
+let defZZ = 14;
+
+//---------------------------------------------
+// 主要変数定義(本当は必要なもの以外は各関数内が良いのだけれども)
+const doc = app.activeDocument;
+const sels = doc.selection;
+const artboards = doc.artboards;
 // tilesizeは出力元タイルサイズの値
 // つまり出力元データのタイルが512pxなどなら512に設定
 var tilesize = 256;
-// imgsizeが画像サイズの値
-// 一旦256でアートボードを用意した後、
-// 256とimgsizeの比率で出力画像の倍率を調整
-var imgsize = 512;
 var img_magnification;
 var base_tileZ
 var base_tileX
@@ -179,16 +194,15 @@ function useropt() {
     var win = new Window('dialog', "enter options");
     win.add('statictext', undefined, "STEP1.出力元アートボード自体について");
     win.add('statictext', undefined, "(1)制作アートボードの設計ズームレベルzを指定してください");
-    var input_base_tileZ = win.add('edittext', undefined, "12");
+    var input_base_tileZ = win.add('edittext', undefined, defZ);
     win.add('statictext', undefined, "(2)制作アートボードの設計左上のタイル座標xを指定してください");
-    var input_base_tileX = win.add('edittext', undefined, "3637");
+    var input_base_tileX = win.add('edittext', undefined, defX);
     win.add('statictext', undefined, "(3)制作アートボードの設計左上のタイル座標yを指定してください");
-    var input_base_tileY = win.add('edittext', undefined, "1612");
-    // ちなみに、z12,x3637,y1612は東京都庁の庁舎
+    var input_base_tileY = win.add('edittext', undefined, defY);
     win.add('statictext', undefined, "----------");
     win.add('statictext', undefined, "STEP2.出力したいタイルデータについて");
     win.add('statictext', undefined, "出力先タイルの希望ズームレベルz'を指定してください");
-    var input_export_Z = win.add('edittext', undefined, "16");
+    var input_export_Z = win.add('edittext', undefined, defZZ);
     //---------------------------------------------
     win.confirmBtn = win.add('button', undefined, "OK", {
         name: 'confirm'
