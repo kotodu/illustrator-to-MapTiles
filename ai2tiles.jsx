@@ -14,22 +14,23 @@ var imgsize = 512;
 // (2)出力元データの各種既定値
     // つまりZ,X,Y、アートボードのデータ
     // XとYで迷う人向けに。Xはフォルダ名、Yは画像名
-    // 因みにこの値は都庁舎
-var defZ = 14;
-var defX = 14549;
-var defY = 6451;
+    // 因みにこの値は鳥取市の名勝・白兎海岸
+var defZ = 15;
+var defX = 28590;
+var defY = 12918;
 
 // (3)出力先既定Zレベル既定値
     // つまりZ'、出力したい地図タイルのズームレベル
-var defZZ = 14;
+var defZZ = 15;
 
 //---------------------------------------------
 // 主要変数定義(本当は必要なもの以外は各関数内が良いのだけれども)
-const doc = app.activeDocument;
-const sels = doc.selection;
-const artboards = doc.artboards;
+var doc = app.activeDocument;
+var sels = doc.selection;
+var artboards = doc.artboards;
 // tilesizeは出力元タイルサイズの値
 // つまり出力元データのタイルが512pxなどなら512に設定
+// ここはあまりいじらない方が良い
 var tilesize = 256;
 var img_magnification;
 var base_tileZ
