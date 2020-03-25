@@ -1,16 +1,37 @@
+// ai2tiles.jsx
+// version : 1.2.2
+// Copyright : kotodu(busroutemap)
+// Licence : MIT
+// github : https://github.com/busroutemap/illustrator-to-MapTiles
 
 //---------------------------------------------
-// 主要変数定義(本当は必要なもの以外は各関数内が良さげだけども)
+// ユーザーによるカスタマイズ可能変数
+// (1)imgsize : 画像サイズの値(px)
+    // ここで決めたサイズの正方形として地図タイルは出力される
+    // 内部的には、一旦256でアートボードを用意した後、256とimgsizeの比率で出力画像の倍率を調整する。
+var imgsize = 512;
+
+// (2)出力元データの各種既定値
+    // つまりZ,X,Y、アートボードのデータ
+    // XとYで迷う人向けに。Xはフォルダ名、Yは画像名
+    // 因みにこの値は鳥取市の名勝・白兎海岸
+var defZ = 15;
+var defX = 28590;
+var defY = 12918;
+
+// (3)出力先既定Zレベル既定値
+    // つまりZ'、出力したい地図タイルのズームレベル
+var defZZ = 15;
+
+//---------------------------------------------
+// 主要変数定義(本当は必要なもの以外は各関数内が良いのだけれども)
 var doc = app.activeDocument;
 var sels = doc.selection;
 var artboards = doc.artboards;
 // tilesizeは出力元タイルサイズの値
 // つまり出力元データのタイルが512pxなどなら512に設定
+// ここはあまりいじらない方が良い
 var tilesize = 256;
-// imgsizeが画像サイズの値
-// 一旦256でアートボードを用意した後、
-// 256とimgsizeの比率で出力画像の倍率を調整
-var imgsize = 512;
 var img_magnification;
 var base_tileZ
 var base_tileX
@@ -42,38 +63,26 @@ function getRect(x, y, width, height) {
     var rect = [];
     rect[0] = x;
     rect[1] = y;
-    // -yじゃなくてyだと思うので修正
-    // 仕様上-yで正しいみたい
+    // illustratorでのyは特殊なので注意
     rect[2] = width + x;
     rect[3] = y - height;
     return rect;
 }
 
 //---------------------------------------------
-// 一時的な出力用アートボードを内部的に作成
 function newArtboard(rect, name) {
     var newArtBoard = artboards.add(rect);
     newArtBoard.name = name;
 }
 //---------------------------------------------
-// mkdirZXYを終えた後にuseopt内で実行、画像出力
 function exportPNG() {
     //---------------------------------------------
-    // 各変数の調整
     // まずZレベルの倍率比を求める(Z'/Z)
     level_magnification = Math.pow(2,( export_z - base_tileZ ));
     // 次に画像サイズ倍率を求める(pngsize/256)
     // タイルサイズと画像サイズを別にすることで、高画質需要に応答
     img_magnification = imgsize / 256;
     // 出力するXフォルダ数を算出
-    // 出力元/タイルサイズは今のアートボードをそのまま分割した場合
-    // そこに倍率比をかけあわせる
-    // 例えば出力元z14、出力先z16なら、倍率は2^2
-    // この出力元アートボードが(w,h)=(4096,2304)=(256*16,256*9)とする
-    // 出力元そのままなら、16個のXフォルダが必要
-    // z14からz16に拡大出力された場合、縦横辺と必要なXフォルダ数は2^2倍される
-    // つまり16*2^(16-14)=16*4=64個のXフォルダが必要
-    // math.floorは切り捨て処理
     export_dirXcount = (Math.floor( base_rectW / tilesize )) * level_magnification;
     // 同様に、出力するY.png数を算出
     export_dirYcount = (Math.floor( base_rectH / tilesize )) * level_magnification;
@@ -82,10 +91,8 @@ function exportPNG() {
     mkdirZXY();
     //---------------------------------------------
     // Math.pow(2,3)なら2*2*2
-    // var numberOfTiles = Math.pow(2, scale) * Math.pow(2, scale);
     // 出力元がz14、出力先がz16なら、4倍の比率がある
     // そこで、z14を256/4=64ずつ区切り、タイル出力時に4倍にする
-    // なお、tilesize≠pngsize
     base_cell = tilesize / level_magnification;
     // ExportOptionsPNG24では、倍率を指定して出力できる
     // horizontalScale,verticalScaleは横,縦の倍率指定(%指定)
@@ -104,17 +111,11 @@ function exportPNG() {
     //---------------------------------------------
     // ここからループ処理
     for (var ix = 0; ix < export_dirXcount; ix++){
-        // なぜdirXcount+1だったんだ？修正済み
-        // xフォルダごとに出力していく
         if (ix > 0) {
             x += base_cell;
         }
         var y = - activeboards.artboardRect[1];
-        // 左上だし、0じゃなくて1だと思う
-        // activeboards.artboardRect[1]はなぜかマイナスなので注意
         for (var iy = 0; iy < export_dirYcount; iy++) {
-            // ycountを超えたら終了、次へ進む
-            // 2周目からはyにbase_cellを足していく
             if (iy > 0) {
                 y += base_cell;
             }
@@ -125,7 +126,6 @@ function exportPNG() {
             export_y = base_tileY * level_magnification;
             var newFileName = export_dir + "/" + export_z + '/' + (export_x + ix) + '/' + (export_y + iy) + '.png';
             var newFile = new File(newFileName);
-            // これらの設定に基づいて画像出力
             doc.exportFile(newFile, ExportType.PNG24, options);
         }
     }
@@ -165,7 +165,6 @@ function mkdirZXY() {
 function end(){
     var win = new Window('dialog', "press OK");
     win.add('statictext', undefined, "実行が完了しました");
-    // OKを押すと終了
     win.confirmBtn = win.add('button', undefined, "OK", {
         name: 'confirm'
     }).onClick = function() {
@@ -179,21 +178,19 @@ function useropt() {
     var win = new Window('dialog', "enter options");
     win.add('statictext', undefined, "STEP1.出力元アートボード自体について");
     win.add('statictext', undefined, "(1)制作アートボードの設計ズームレベルzを指定してください");
-    var input_base_tileZ = win.add('edittext', undefined, "12");
+    var input_base_tileZ = win.add('edittext', undefined, defZ);
     win.add('statictext', undefined, "(2)制作アートボードの設計左上のタイル座標xを指定してください");
-    var input_base_tileX = win.add('edittext', undefined, "3637");
+    var input_base_tileX = win.add('edittext', undefined, defX);
     win.add('statictext', undefined, "(3)制作アートボードの設計左上のタイル座標yを指定してください");
-    var input_base_tileY = win.add('edittext', undefined, "1612");
-    // ちなみに、z12,x3637,y1612は東京都庁の庁舎
+    var input_base_tileY = win.add('edittext', undefined, defY);
     win.add('statictext', undefined, "----------");
     win.add('statictext', undefined, "STEP2.出力したいタイルデータについて");
     win.add('statictext', undefined, "出力先タイルの希望ズームレベルz'を指定してください");
-    var input_export_Z = win.add('edittext', undefined, "16");
+    var input_export_Z = win.add('edittext', undefined, defZZ);
     //---------------------------------------------
     win.confirmBtn = win.add('button', undefined, "OK", {
         name: 'confirm'
     }).onClick = function() {
-        // 10進数で書かれたzoomInput.textを数値に変換し、整数に繰り上げる。
         base_tileZ = Math.ceil(parseInt(input_base_tileZ.text, 10));
         base_tileX = Math.ceil(parseInt(input_base_tileX.text, 10));
         base_tileY = Math.ceil(parseInt(input_base_tileY.text, 10));
@@ -213,14 +210,12 @@ function useropt() {
 //---------------------------------------------
 // スクリプト起動時に問題なければ、最初に実行される関数
 function go() {
-    // アクティブなアートボードを呼び出す
     index = doc.artboards.getActiveArtboardIndex()
     activeboards = doc.artboards[index];
     // 0,1,2,3は左上のx,左上のy,右下のx,右下のy
     base_rectW = activeboards.artboardRect[2] - activeboards.artboardRect[0];
     base_rectH = - (activeboards.artboardRect[3] - activeboards.artboardRect[1]);
     // y軸方向はマイナスになる仕様？
-    // 準備ができたら情報入力画面へ
     useropt();
 }
 
@@ -228,7 +223,6 @@ function go() {
 // ここからユーザー操作
 // ドキュメントが開かれていて、かつ保存されていれば実行
 if (app.documents.length > 0) {
-    doc = app.activeDocument;
     if (!doc.saved) {
         Window.alert("ドキュメントが保存されていません");
     } else {
