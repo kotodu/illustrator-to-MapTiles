@@ -14,6 +14,12 @@
 
 ## [Unreleased]
 ### Added
+### Changed
+### Deprecated
+### Fixed
+
+## [1.2.3]2020/03/25
+### Added
 - 設計.mdをdoc内に新設し、readmeと分離
 ### Changed
 ### Deprecated
