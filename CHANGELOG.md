@@ -14,9 +14,12 @@
 
 ## [Unreleased]
 ### Added
+- 設計.mdをdoc内に新設し、readmeと分離
 ### Changed
 ### Deprecated
 ### Fixed
+- 内部で関数の構成などを大幅に変更
+- 処理などに変更はなし
 
 ## [1.2.2]2019/12/21
 ### Fixed
