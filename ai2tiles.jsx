@@ -79,7 +79,7 @@ function exportPNG() {
     export_dirYcount = (Math.floor( base_rectH / tilesize )) * level_magnification;
     //---------------------------------------------
     // フォルダを作成
-    // mkdirZXY();
+    mkdirZXY();
     //---------------------------------------------
     // Math.pow(2,3)なら2*2*2
     // var numberOfTiles = Math.pow(2, scale) * Math.pow(2, scale);
@@ -102,35 +102,7 @@ function exportPNG() {
     // 一時アートボードはこの時点で、まだ座標0,0にいる
     artboards.setActiveArtboardIndex(tmp);
     //---------------------------------------------
-    // ラベル付与
-    // loop1:{
-    // ループ前に、プログレスバー(進捗バー)を描画
-    // 出力する画像総数を既定
-    // 出力済み画像総数はwin.bar.valueそのもの
-    // 出力する画像数はexport_dirXcount*export_dirYcount
-    var maxImgCounts = export_dirXcount * export_dirYcount;
-    // 改めて考えるとdirYって何、まあいいけども
-    // ここのwinが重複しないよう気をつけて
-    var barwin = new Window('palette', 'Progress');
-    // var stop = false;
-    // プログレスバーを表示
-    // 値は.valueに代入されている
-    // 都度updateする必要があるので注意、あと若干遅延させること
-    var pb = barwin.add('progressbar', [10,30,10+384,30+15], 0, maxImgCounts);
-    // クリックすると中止フラグが立つキャンセルボタン
-    // 値は非同期だから無理だと思う
-    // barwin.btn = barwin.add('button', undefined, "Cancel", {
-    //     name: 'confirm'
-    // }).onClick = function() {
-    //     stop = true;
-    //     barwin.close();
-    // }
-    // valueを0にする。おまじない
-    pb.value = 0;
-    barwin.show();
-    //---------------------------------------------
     // ここからループ処理
-    // loop:
     for (var ix = 0; ix < export_dirXcount; ix++){
         // なぜdirXcount+1だったんだ？修正済み
         // xフォルダごとに出力していく
@@ -146,11 +118,6 @@ function exportPNG() {
             if (iy > 0) {
                 y += base_cell;
             }
-            // 多分値は非同期
-            // if (stop){
-            //     // 停止指示なら中止
-            //     break loop;
-            // }
             // ファイル名は出力先フォルダ/z/x/y.png
             // 一時アートボードを移動させる
             artboards[tmp].artboardRect = getRect(x,-y, base_cell, base_cell);
@@ -160,27 +127,9 @@ function exportPNG() {
             var newFile = new File(newFileName);
             // これらの設定に基づいて画像出力
             doc.exportFile(newFile, ExportType.PNG24, options);
-            // 実行したので出力済み総数を+1する
-            pb.value += 1;
-            // ここで更新すると流石に処理が早すぎる
-            // 少し遅延させ、ダイアログの状況を更新
-            $.sleep(10);
-            // 確率で描画する
-            var random = Math.round( Math.random()*100 )
-            if (random < 60){
-                barwin.update();
-            }
         }
     }
-    // ラベル用forここまで
-    // }
     artboards.remove(tmp);
-    //---------------------------------------------
-    // 処理完了、まだ閉じられていなければ閉じる
-    // activeかどうか、.activeとかで調べられないの？
-    if (barwin.active){
-        barwin.close();
-    };
     return
 }
 
@@ -214,16 +163,15 @@ function mkdirZXY() {
 //---------------------------------------------
 // 終了時動作
 function end(){
-    alert("処理が完了しました");
-    // var win = new Window('dialog', "press OK");
-    // win.add('statictext', undefined, "実行が完了しました");
-    // // OKを押すと終了
-    // win.confirmBtn = win.add('button', undefined, "OK", {
-    //     name: 'confirm'
-    // }).onClick = function() {
-    //     win.close();
-    // }
-    // win.show();
+    var win = new Window('dialog', "press OK");
+    win.add('statictext', undefined, "実行が完了しました");
+    // OKを押すと終了
+    win.confirmBtn = win.add('button', undefined, "OK", {
+        name: 'confirm'
+    }).onClick = function() {
+        win.close();
+    }
+    win.show();
 }
 //---------------------------------------------
 // 情報入力画面、go()の次に実行される
@@ -251,6 +199,8 @@ function useropt() {
         base_tileY = Math.ceil(parseInt(input_base_tileY.text, 10));
         export_z = Math.ceil(parseInt(input_export_Z.text, 10));
         win.close();
+        exportPNG();
+        end();
     }
     win.add('button', undefined, "Cancel", {
         name: 'cancel'
@@ -272,9 +222,6 @@ function go() {
     // y軸方向はマイナスになる仕様？
     // 準備ができたら情報入力画面へ
     useropt();
-    mkdirZXY();
-    exportPNG();
-    end();
 }
 
 //---------------------------------------------
