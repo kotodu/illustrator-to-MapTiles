@@ -57,6 +57,76 @@ var artboards = doc.artboards;
 // 実行し始める時点でのアートボード数を記録
 var tmp = artboards.length;
 //---------------------------------------------
+// クラスを用いた変更
+// INPUTに利用者独自設定を反映させる
+// INPUTを踏まえてBASEで出力範囲と出力仕様を確定させる
+
+var Input = (function (z, x, y, zz, tileoptions) {
+    
+    // コンストラクタ
+    if(!(this instanceof Input)) {
+        return new Input(z, x, y, zz, tileoptions);
+    }
+    var i = Input.prototype;
+    
+    i.setZ = function (z) {
+        if (z < 8 || z > 20) {
+            // 不正な値
+            this.z = 888;
+        } else {
+            this.z = Math.ceil(z);
+        }
+    }
+    i.setX = function (x) {
+        if (x < 0) {
+            // 不正な値
+            this.x = 888;
+        } else {
+            this.x = Math.ceil(x);
+        }
+    }
+    i.setY = function (y) {
+        if (y < 0) {
+            // 不正な値
+            this.y = 888;
+        } else {
+            this.y = Math.ceil(y)
+        }
+    }
+    i.setZZ = function (zz) {
+        if (zz < 8 || zz > 20) {
+            // 不正な値
+            this.zz = 888;
+        } else {
+            this.zz = Math.ceil(zz);
+        }
+    }
+    i.setOptions = function (tileoptions) {
+        if (tileoptions) {
+            
+        }
+    }
+
+})();
+
+var Base = (function () {
+
+
+    // コンストラクタ
+    if (!(this instanceof Base)) {
+        return new Base();
+    }
+
+
+
+})();
+
+
+var OUTPUT;
+
+var ARTBOAD;
+
+//---------------------------------------------
 /**
  * 左上のx,yとアートボードのw,hから、左上のx,yと右下のx,yに変換する
  * (＝イラレ向けのrect)。
