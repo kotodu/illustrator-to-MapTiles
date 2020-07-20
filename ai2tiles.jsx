@@ -1,5 +1,5 @@
 // ai2tiles.jsx
-// version : 1.2.3
+// version : 1.3.0
 // Copyright : kotodu(busroutemap)
 // Licence : MIT
 // github : https://github.com/busroutemap/illustrator-to-MapTiles
@@ -9,15 +9,15 @@
 // (1)imgsize : 画像サイズの値(px)
     // ここで決めたサイズの正方形として地図タイルは出力される
     // 内部的には、一旦256でアートボードを用意した後、256とimgsizeの比率で出力画像の倍率を調整する。
-var imgsize = 512;
+var imgsize = 256;
 
 // (2)出力元データの各種既定値
     // つまりZ,X,Y、アートボードのデータ
     // XとYで迷う人向けに。Xはフォルダ名、Yは画像名
     // 因みにこの値は鳥取市の名勝・白兎海岸
 var defZ = 15;
-var defX = 28590;
-var defY = 12918;
+var defX = 28576;
+var defY = 12912;
 
 // (3)出力先既定Zレベル既定値
     // つまりZ'、出力したい地図タイルのズームレベル
@@ -36,8 +36,9 @@ var tilesize = 256;
 // 一応。JPEG出力画質設定は0-100
 // options.qualitySetting=100;
 var options = new ExportOptionsPNG24();
+//---------------------------------------------
 // PNG用、透過するかどうか
-// options.transparency=true;
+options.transparency=true;
 // 以下は共通
 // エクスポート領域をアートボードの大きさに->true
 options.artBoardClipping = true;
@@ -60,11 +61,11 @@ var tmp = artboards.length;
 /**
  * 左上のx,yとアートボードのw,hから、左上のx,yと右下のx,yに変換する
  * (＝イラレ向けのrect)。
- * @param {*} x 
- * @param {*} y 
- * @param {*} width 
- * @param {*} height 
- * @return x1,y1,x2,y2
+ * @param {Number} x 
+ * @param {Number} y 
+ * @param {Number} width 
+ * @param {Number} height 
+ * @return {Array} x1,y1,x2,y2
  */
 function getRect(x, y, width, height) {
     var rect = [];
@@ -77,31 +78,43 @@ function getRect(x, y, width, height) {
 }
 
 //---------------------------------------------
+/**
+ * アートボードを新規作成する
+ * @param {Array} rect ZXYZ
+ * @param {String} name 新規作成するアートボードの名称
+ */
 function newArtboard(rect, name) {
+
+    // 引数に基づきアートボードを作成
     var newArtBoard = artboards.add(rect);
     newArtBoard.name = name;
+
+    // 新たなアートボードオブジェクトを返す
     return newArtBoard;
 }
 //---------------------------------------------
 /**
  * ユーザーに画像の出力先フォルダを尋ねる
  * mkdirZXYを分割しZフォルダだけ質問後に作るように
+ * @param {Array} ZXYZ
+ * @return {String} 出力フォルダ
  */
 function askPath(ZXYZ){
     var export_z = ZXYZ[3];
     // 必要なフォルダを作成する
     var export_dir = Folder.selectDialog('STEP3.画像の出力先フォルダを選択してください');
-    if(!(export_dir===null)) {
-        var path = export_dir;
-        path = path.toString();
-    } else{
-        // 処理中止
+
+    // ダイアログで選ばれなかった場合、何も返さない
+    if (export_dir === null) {
         return 
     }
     // zも含めてpath
-    var exportPath = export_dir + "/" + export_z;
-    // 
+    var exportPath = export_dir.toString() + "/" + export_z;
+
+    // フォルダオブジェクトを作成
     var folderZ = new Folder(exportPath);
+
+    // 出力先フォルダーがなければ、新規作成
     if (!folderZ.exists){
         folderZ.create();
     };
@@ -109,10 +122,10 @@ function askPath(ZXYZ){
 }
 //---------------------------------------------
 /**
- * 
- * @param {*} path 
- * @param {*} examinedAreaData [X,Y,W,H]
- * @param {*} ZXYZ [Z,X,Y,Z']
+ * 画像を出力する処理
+ * @param {String} path 
+ * @param {Array} examinedAreaData [X,Y,W,H]で示された出力範囲エリア
+ * @param {Array} ZXYZ [Z,X,Y,Z']で示された加工設定
  */
 function exportPNG(path,examinedAreaData,ZXYZ) {
     var exportArea = examinedAreaData;
@@ -213,62 +226,104 @@ function end(){
     return;
 }
 //---------------------------------------------
-// 情報入力画面、go()の次に実行される
+/**
+ * 情報入力画面の表示
+ * @return {Array} ZXYZ(ベースデータのZXYと出力したいタイルのZ)
+ */
 function useropt() {
+    // ダイアログウィンドウを作成
     var win = new Window('dialog', "enter options");
+
+    // ダイアログウィンドウの中身を構築
+    // 利用者にベースデータのZXYと出力のZの指定をお願いする
     win.add('statictext', undefined, "STEP1.出力元アートボード自体について");
-    win.add('statictext', undefined, "(1)制作アートボードの設計ズームレベルzを指定してください");
+    win.add('statictext', undefined, "(1)制作アートボードの設計ズームレベルZ");
     var input_base_tileZ = win.add('edittext', undefined, defZ);
-    win.add('statictext', undefined, "(2)制作アートボードの設計左上のタイル座標xを指定してください");
+    win.add('statictext', undefined, "(2)制作アートボードの設計左上のタイル座標X");
     var input_base_tileX = win.add('edittext', undefined, defX);
-    win.add('statictext', undefined, "(3)制作アートボードの設計左上のタイル座標yを指定してください");
+    win.add('statictext', undefined, "(3)制作アートボードの設計左上のタイル座標Y");
     var input_base_tileY = win.add('edittext', undefined, defY);
     win.add('statictext', undefined, "----------");
     win.add('statictext', undefined, "STEP2.出力したいタイルデータについて");
-    win.add('statictext', undefined, "出力先タイルの希望ズームレベルz'を指定してください");
+    win.add('statictext', undefined, "(1)出力先タイルの希望ズームレベルZ'");
     var input_export_Z = win.add('edittext', undefined, defZZ);
+    win.add('statictext', undefined, "(2)出力時のタイル背景の透過について");
+    var input_tile_transparency = win.add('checkbox', undefined, "タイル背景を透過する");
+
     //---------------------------------------------
+    // ベースデータのZXYと出力のZを定義
     var base_tileZ;
     var base_tileX;
     var base_tileY;
     var export_z;
+
+    // 決定ボタン
+    // 決定時、代入されていた値を格納し、ウィンドウを閉じる
     win.confirmBtn = win.add('button', undefined, "OK", {
         name: 'confirm'
-    }).onClick = function() {
+    }).onClick = function () {
+        
+        // 小数点の場合、切り上げる
         base_tileZ = Math.ceil(parseInt(input_base_tileZ.text, 10));
         base_tileX = Math.ceil(parseInt(input_base_tileX.text, 10));
         base_tileY = Math.ceil(parseInt(input_base_tileY.text, 10));
         export_z = Math.ceil(parseInt(input_export_Z.text, 10));
+
+        // タイルを透過するかどうか
+        options.transparency = input_tile_transparency.value;
+
+        // 情報入力画面を閉じる
         win.close();
-    }
+        }
+    
+    // キャンセルボタン
     win.add('button', undefined, "Cancel", {
         name: 'cancel'
     }).onClick = function() {
         win.close();
-    }
+        }
+    
+    // ダイアログウィンドウを表示
     win.show();
+
+    // ユーザー動作後、各種値を返す
+    // ZYXZ
     return [base_tileZ,base_tileX,base_tileY,export_z];
 }
 
 //---------------------------------------------
+/**
+ * スクリプト起動時に問題なければ、最初に実行される関数
+ * 
+ */
 function go() {
-    // スクリプト起動時に問題なければ、最初に実行される関数
-    // y軸方向はマイナスになる仕様？
+    // y軸方向はマイナスになる仕様？注意すること
+
+    // ユーザーにオプションを尋ねる
     var ZXYZ = useropt();
-    $.writeln(ZXYZ);
-    if(!(ZXYZ[0]===undefined)){
+
+    // $.writeln(ZXYZ);
+
+    // ユーザー入力データに問題があれば何もしない
+    if (!(ZXYZ[0] === undefined)) {
         var examinedAreaData = examineArea(ZXYZ);
         var path = askPath(ZXYZ);
+
+        // 出力フォルダーに問題があれば何もしない
+        if (!(path === undefined)) {
+            // $.writeln(path);
+
+            // 各種設定を元に出力
+            exportPNG(path,examinedAreaData,ZXYZ);
+        }
     }
-    if(!(path===undefined)){
-        $.writeln(path);
-        exportPNG(path,examinedAreaData,ZXYZ);
-    }
+
+    // 終了処理
     end();
 }
 
 //---------------------------------------------
-// ここからユーザー操作
+// 最初に実行される部分
 // ドキュメントが開かれていて、かつ保存されていれば実行
 if (app.documents.length > 0) {
     if (!doc.saved) {
