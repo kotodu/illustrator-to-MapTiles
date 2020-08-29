@@ -25,6 +25,8 @@ Adobe Illustratorの拡張スクリプトです
 1. もちろん、***スクリプト実行前のバックアップをお忘れなく***
     - 編集履歴の汚染が発生します、編集前の状態に戻れません
 
+---------------------------------------------
+
 # 動作環境
 - Adobe Illustrator CC 2020他
     - CC2018では動いていました
@@ -51,7 +53,11 @@ Adobe Illustratorの拡張スクリプトです
 
 # 導入方法・使い方
 1. スクリプトを実行したいIllustratorデータを開く
-1. 本githubの"ai2tiles.jsx"をRAWから名前を付けて保存する
+1. 本githubの"ai2tiles.jsx"をダウンロードする
+    - [JSXのみダウンロード](https://kotodu.io/illustrator-to-MapTiles/ai2tiles.jsx)
+        - 右クリック->名前を付けて保存
+    - [最新コードの全データZIP](https://github.com/kotodu/illustrator-to-MapTiles/archive/master.zip)
+        - ZIPダウンロード->展開
 1. PC内のどこかに"ai2tiles.jsx"を配置する
     - 例えば、adobe既定のスクリプト保管フォルダ
 1. ***スクリプト実行前のIllustratorデータを保存します***
